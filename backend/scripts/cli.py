@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+
 import typer
 import asyncio
 from app.connectors.apple_newsroom import AppleNewsroomConnector
@@ -53,11 +55,12 @@ def fetch(source: str):
     """
 
     if source == "apple":
-        connector = AppleNewsroomConnector()
+        signal_bus = SignalBus()
+        connector = AppleNewsroomConnector(signal_bus)
 
         print("Fetching Apple Newsroom...")
 
-        result = connector.fetch()
+        result = asyncio.run(connector.fetch())
 
         print(result)
 

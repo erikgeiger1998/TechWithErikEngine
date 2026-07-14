@@ -42,12 +42,16 @@ services:
     command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
     volumes:
       - ./backend:/app
+      - ./scripts:/scripts
+      - ./alembic:/app/alembic
+      - ./alembic.ini:/app/alembic.ini
     ports:
       - "8000:8000"
     environment:
       - DATABASE_URL=postgresql+asyncpg://editorial:editorial_password@db:5432/editorial_os
       - REDIS_URL=redis://redis:6379/0
       - ENVIRONMENT=development
+      - PYTHONPATH=/app
     depends_on:
       db:
         condition: service_healthy
