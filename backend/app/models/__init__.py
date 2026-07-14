@@ -5,3 +5,4 @@ from app.models.problem import Problem, ProblemState
 from app.models.opportunity import Opportunity, OpportunityStatus
 from app.models.recommendation import Recommendation, HumanDecision
 from app.models.ai_cost import AICostTracker
+from app.models.connector_health import ConnectorHealth, ConnectorStatus

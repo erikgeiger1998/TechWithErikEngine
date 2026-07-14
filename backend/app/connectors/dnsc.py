@@ -15,7 +15,17 @@ class DNSCConnector(BaseConnector):
     FEED_URL = "https://www.dnsc.ro/rss"
 
     def __init__(self):
-        self.client = httpx.AsyncClient(timeout=self.retry_policy()["timeout_seconds"], follow_redirects=True)
+        headers = {
+            "User-Agent": (
+                "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
+                "AppleWebKit/537.36 (KHTML, like Gecko) "
+                "Chrome/138.0 Safari/537.36"
+            ),
+            "Accept": "application/rss+xml,application/xml,text/xml;q=0.9,*/*;q=0.8",
+            "Accept-Language": "ro-RO,ro;q=0.9,en;q=0.8",
+            "Referer": "https://www.dnsc.ro/",
+        }
+        self.client = httpx.AsyncClient(timeout=self.retry_policy()["timeout_seconds"], follow_redirects=True, headers=headers)
 
     async def metadata(self) -> Dict[str, Any]:
         return {

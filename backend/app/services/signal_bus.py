@@ -22,7 +22,7 @@ class SignalBus:
             data.encode("utf-8")
         ).hexdigest()
 
-    async def publish(self, raw_data: Dict[str, Any], signal_data: Dict[str, Any]) -> Signal:
+    async def publish(self, raw_data: Dict[str, Any], signal_data: Dict[str, Any]) -> tuple[Signal, bool]:
         """
         Single public method.
         Saves the RawDocument (if not exists) and then saves the Signal.
@@ -69,6 +69,14 @@ class SignalBus:
             f"{signal_data.get('source_name')}:{signal_data.get('title')}:{signal_data.get('url')}"
         )
         
+        # Check if duplicate signal exists
+        stmt = select(Signal).where(Signal.fingerprint == signal_fingerprint)
+        result = await self.db.execute(stmt)
+        existing_signal = result.scalars().first()
+        
+        if existing_signal:
+            return existing_signal, True
+        
         signal = Signal(
             source_name=signal_data.get("source_name", source_name),
             title=signal_data.get("title", ""),
@@ -80,13 +88,12 @@ class SignalBus:
             importance=signal_data.get("importance", 50.0),
             freshness=signal_data.get("freshness", 5.0),
             created_at=datetime.utcnow(),
-            raw_document_id=raw_doc.id
+            raw_document_id=raw_doc.id,
+            fingerprint=signal_fingerprint
         )
-        # Note: Added fingerprint deduplication logic on Signal in a real app if required
-        # For MVP we just insert.
 
         self.db.add(signal)
         await self.db.commit()
         await self.db.refresh(signal)
 
-        return signal
+        return signal, False

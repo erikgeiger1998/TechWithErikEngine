@@ -2,14 +2,16 @@
 
 import typer
 import asyncio
-from typing import Optional
+from datetime import datetime
 from rich.console import Console
 from rich.table import Table
 from rich.panel import Panel
+from sqlalchemy.future import select
 
 from app.database.connection import AsyncSessionLocal
 from app.services.ingestion import IngestionService
 from app.services.editorial import EditorialEngine
+from app.models.connector_health import ConnectorHealth
 
 app = typer.Typer(help="Tech With Erik - Editorial Intelligence OS CLI")
 console = Console()
@@ -25,37 +27,89 @@ def fetch(source: str):
     async def _fetch():
         async with AsyncSessionLocal() as db:
             service = IngestionService(db)
-            await service.fetch(source)
+            summary = await service.fetch(source)
             
+            console.print("\n[bold cyan]──────── Ingestion Summary ────────[/bold cyan]")
+            
+            for name, details in summary["details"].items():
+                status = details["status"]
+                items = details["items"]
+                error = details["error"]
+                
+                if status == "HEALTHY":
+                    console.print(f"[green]✓ {name.ljust(20)} {items} items[/green]")
+                elif status == "WARNING":
+                    msg = error if error else "Warning"
+                    # Only show up to ~20 chars of error
+                    console.print(f"[yellow]⚠ {name.ljust(20)} {msg[:30]}[/yellow]")
+                elif status == "DISABLED":
+                    console.print(f"[yellow]⚠ {name.ljust(20)} Disabled[/yellow]")
+                else:
+                    msg = error if error else "Failed"
+                    console.print(f"[red]✗ {name.ljust(20)} {msg[:30]}[/red]")
+            
+            console.print("[bold cyan]──────────────────────────────────[/bold cyan]")
+            console.print(f"Processed: {summary['processed']}")
+            console.print(f"Healthy:   {summary['healthy']}")
+            console.print(f"Warnings:  {summary['warnings']}")
+            console.print(f"Failures:  {summary['failures']}")
+            console.print(f"Duration:  {summary['duration_s']:.2f} s\n")
+
     run_async(_fetch())
-    console.print(f"[bold green]Successfully ran ingestion for {source}[/bold green]")
+
+def _format_time(dt: datetime) -> str:
+    if not dt:
+        return "-"
+    return dt.strftime("%H:%M")
 
 @app.command("health")
 def health():
     """
-    Show health status of all connectors.
+    Show health status of all connectors from the database history.
     """
     async def _health():
         async with AsyncSessionLocal() as db:
-            service = IngestionService(db)
+            stmt = select(ConnectorHealth).order_by(ConnectorHealth.connector_name)
+            result = await db.execute(stmt)
+            records = result.scalars().all()
+            
             table = Table(title="Connector Health Status")
             table.add_column("Connector", style="cyan", no_wrap=True)
-            table.add_column("Status", style="magenta")
-            table.add_column("Latency (ms)", justify="right", style="green")
-            table.add_column("Errors", justify="right", style="red")
+            table.add_column("Status", style="bold")
+            table.add_column("Last Success", justify="center")
+            table.add_column("Last Failure", justify="center")
+            table.add_column("HTTP", justify="center")
+            table.add_column("Latency", justify="right")
+            table.add_column("Items", justify="right")
+            table.add_column("Duplicates", justify="right")
 
-            for name, connector in service.connectors.items():
-                health_data = await connector.health()
-                status = health_data.get("status", "Unknown")
-                latency = str(round(health_data.get("latency_ms", 0), 2))
-                errors = str(health_data.get("errors", 0))
-                
-                if status == "Healthy":
-                    status_col = f"[green]{status}[/green]"
+            if not records:
+                console.print("[yellow]No connector health data found. Run an ingestion first.[/yellow]")
+                return
+
+            for rec in records:
+                status_val = rec.status.value if rec.status else "UNKNOWN"
+                if status_val == "HEALTHY":
+                    status_col = f"[green]HEALTHY[/green]"
+                elif status_val == "WARNING":
+                    status_col = f"[yellow]WARNING[/yellow]"
+                elif status_val == "FAILED":
+                    status_col = f"[red]FAILED[/red]"
                 else:
-                    status_col = f"[red]{status}[/red]"
-                    
-                table.add_row(name, status_col, latency, errors)
+                    status_col = f"[dim]{status_val}[/dim]"
+                
+                latency_str = f"{rec.latency_ms:.0f} ms" if rec.latency_ms is not None else "-"
+                
+                table.add_row(
+                    rec.connector_name,
+                    status_col,
+                    _format_time(rec.last_success),
+                    _format_time(rec.last_failure),
+                    rec.http_status or "-",
+                    latency_str,
+                    str(rec.items_processed),
+                    str(rec.duplicates)
+                )
                 
             console.print(table)
             

@@ -13,6 +13,7 @@ class Signal(Base):
     url = Column(String, index=True, nullable=False)
     category = Column(String, nullable=True)
     language = Column(String, default="en")
+    fingerprint = Column(String, index=True, nullable=True)
     
     reliability = Column(Float, nullable=False) # From Source Profile ("Is it true?")
     importance = Column(Float, nullable=False, default=50.0) # From Source Profile ("Influence?")
