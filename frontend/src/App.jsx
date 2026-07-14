@@ -68,12 +68,12 @@ function App() {
             </div>
             <h2 className="brief-topic">{recommendation.topic.replace("Fix: ", "")}</h2>
             <div className="metric-sub" style={{marginBottom: '24px'}}>
-              Confidence: <strong>{recommendation.confidence.toFixed(1)}%</strong> &nbsp;&bull;&nbsp; Trust Risk: <strong>{recommendation.trust_risk}</strong>
+              Confidence: <strong>{(recommendation.confidence || 0).toFixed(1)}%</strong> &nbsp;&bull;&nbsp; Trust Risk: <strong>{recommendation.trust_risk}</strong>
             </div>
             
             <h3 style={{fontSize: '0.875rem', color: '#8b8b9d', marginBottom: '12px'}}>Primary Evidence</h3>
             <div className="evidence-list">
-              {recommendation.evidence.map((ev, i) => (
+              {recommendation.evidence?.map((ev, i) => (
                 <div key={i} className="evidence-tag">
                   <strong>{ev.source}</strong> &middot; {ev.type}
                 </div>
