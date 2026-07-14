@@ -11,11 +11,11 @@ class DNSCConnector(BaseConnector):
     Tier 1 Official Source: DNSC (Directoratul Național de Securitate Cibernetică)
     High Priority - Romanian Security Alerts
     """
-    # Using the alerts RSS/feed URL (placeholder until DNSC specific API/feed is confirmed)
-    FEED_URL = "https://dnsc.ro/rss"
+    # Using the alerts RSS/feed URL
+    FEED_URL = "https://www.dnsc.ro/rss"
 
     def __init__(self):
-        self.client = httpx.AsyncClient(timeout=self.retry_policy()["timeout_seconds"])
+        self.client = httpx.AsyncClient(timeout=self.retry_policy()["timeout_seconds"], follow_redirects=True)
 
     async def metadata(self) -> Dict[str, Any]:
         return {

@@ -19,8 +19,8 @@ class IngestionService:
             "apple": AppleNewsroomConnector(),
             "apple_support": AppleSupportConnector(),
             "dnsc": DNSCConnector(),
-            "autocomplete": GoogleAutocompleteConnector(),
-            "trends": GoogleTrendsRomaniaConnector()
+            "autocomplete": GoogleAutocompleteConnector()
+            # "trends": GoogleTrendsRomaniaConnector() # Temporarily disabled
         }
 
     async def fetch(self, source: str):

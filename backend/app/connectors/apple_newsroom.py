@@ -13,7 +13,7 @@ class AppleNewsroomConnector(BaseConnector):
     RSS_URL = "https://www.apple.com/newsroom/rss-feed.rss"
 
     def __init__(self):
-        self.client = httpx.AsyncClient(timeout=self.retry_policy()["timeout_seconds"])
+        self.client = httpx.AsyncClient(timeout=self.retry_policy()["timeout_seconds"], follow_redirects=True)
 
     async def metadata(self) -> Dict[str, Any]:
         return {

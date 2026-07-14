@@ -16,7 +16,7 @@ class AppleSupportConnector(BaseConnector):
     SITEMAP_URL = "https://support.apple.com/sitemap.xml"
 
     def __init__(self):
-        self.client = httpx.AsyncClient(timeout=self.retry_policy()["timeout_seconds"])
+        self.client = httpx.AsyncClient(timeout=self.retry_policy()["timeout_seconds"], follow_redirects=True)
 
     async def metadata(self) -> Dict[str, Any]:
         return {

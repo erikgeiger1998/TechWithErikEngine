@@ -1,6 +1,7 @@
 import httpx
 import logging
 import json
+from urllib.parse import quote
 from typing import Dict, Any, List
 from app.core.connector import BaseConnector
 
@@ -15,7 +16,7 @@ class GoogleAutocompleteConnector(BaseConnector):
     BASE_URL = "http://suggestqueries.google.com/complete/search?client=chrome&hl=ro&gl=ro&q="
 
     def __init__(self):
-        self.client = httpx.AsyncClient(timeout=self.retry_policy()["timeout_seconds"])
+        self.client = httpx.AsyncClient(timeout=self.retry_policy()["timeout_seconds"], follow_redirects=True)
 
     async def metadata(self) -> Dict[str, Any]:
         return {
@@ -44,7 +45,7 @@ class GoogleAutocompleteConnector(BaseConnector):
     async def discover(self) -> List[str]:
         # A list of root queries to test human friction against
         seed_queries = ["iphone", "baterie iphone", "iphone nu", "whatsapp", "android", "telefonul se"]
-        return [f"{self.BASE_URL}{httpx.utils.quote(q)}" for q in seed_queries]
+        return [f"{self.BASE_URL}{quote(q)}" for q in seed_queries]
 
     async def fetch(self, target: str) -> Dict[str, Any]:
         logger.info(f"[AUTOCOMPLETE] Fetching {target}")
