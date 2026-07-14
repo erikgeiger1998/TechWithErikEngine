@@ -10,8 +10,8 @@ function App() {
     const fetchData = async () => {
       try {
         const [metricsRes, recRes] = await Promise.all([
-          fetch('http://localhost:8000/api/dashboard/metrics'),
-          fetch('http://localhost:8000/api/recommendations/today')
+          fetch('/api/dashboard/metrics'),
+          fetch('/api/recommendations/today')
         ])
         
         const metricsData = await metricsRes.json()
