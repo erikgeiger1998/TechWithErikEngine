@@ -69,40 +69,9 @@ class BaseConnector(ABC):
         pass
 
     @abstractmethod
-    async def archive(self, raw_data: Dict[str, Any]) -> None:
-        """
-        Send the raw payload (HTML, JSON, RSS) to the Archiver for storage.
-        """
-        pass
-
-    @abstractmethod
-    async def publish(self, signal: Dict[str, Any]) -> None:
-        """
-        Send the normalized Signal to the Signal Bus.
-        """
-        pass
-
-    @abstractmethod
     async def health(self) -> Dict[str, Any]:
         """
         Returns the current health status of the connector.
         e.g., {"status": "Healthy", "latency": 231, "errors": 0}
         """
         pass
-
-    async def execute(self) -> None:
-        """
-        The main pipeline execution triggered by the Scheduler.
-        """
-        try:
-            targets = await self.discover()
-            for target in targets:
-                raw_data = await self.fetch(target)
-                await self.archive(raw_data)
-                
-                signal = await self.normalize(raw_data)
-                await self.publish(signal)
-                
-        except Exception as e:
-            logger.error(f"[{self.metadata().get('id', 'UNKNOWN')}] Execution failed: {str(e)}")
-            raise e

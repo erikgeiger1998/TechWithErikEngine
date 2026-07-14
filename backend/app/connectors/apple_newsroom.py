@@ -12,8 +12,7 @@ class AppleNewsroomConnector(BaseConnector):
     """
     RSS_URL = "https://www.apple.com/newsroom/rss-feed.rss"
 
-    def __init__(self, signal_bus):
-        self.bus = signal_bus
+    def __init__(self):
         self.client = httpx.AsyncClient(timeout=self.retry_policy()["timeout_seconds"])
 
     async def metadata(self) -> Dict[str, Any]:
@@ -62,8 +61,7 @@ class AppleNewsroomConnector(BaseConnector):
             "feed_url": target
         }
 
-    async def archive(self, raw_data: Dict[str, Any]) -> int:
-        return await self.bus.archive_raw(raw_data)
+
 
     async def normalize(self, raw_data: Dict[str, Any]) -> List[Dict[str, Any]]:
         # Extremely basic RSS parsing using BeautifulSoup
@@ -83,9 +81,6 @@ class AppleNewsroomConnector(BaseConnector):
             })
         return signals
 
-    async def publish(self, signal: Dict[str, Any], raw_doc_id: int) -> None:
-        await self.bus.publish_signal(signal, raw_doc_id=raw_doc_id)
-
     async def health(self) -> Dict[str, Any]:
         try:
             res = await self.client.get(self.RSS_URL)
@@ -94,14 +89,3 @@ class AppleNewsroomConnector(BaseConnector):
         except Exception as e:
             return {"status": "Unhealthy", "error": str(e)}
         return {"status": "Warning", "error": "Unknown"}
-
-    async def execute(self) -> None:
-        """Override execute to handle multiple signals returned by normalize"""
-        targets = await self.discover()
-        for target in targets:
-            raw_data = await self.fetch(target)
-            raw_doc_id = await self.archive(raw_data)
-            
-            signals = await self.normalize(raw_data)
-            for signal in signals:
-                await self.publish(signal, raw_doc_id)

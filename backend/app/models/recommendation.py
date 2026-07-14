@@ -19,7 +19,7 @@ class Recommendation(Base):
     __tablename__ = "recommendations"
 
     id = Column(Integer, primary_key=True, index=True)
-    opportunity_id = Column(Integer, ForeignKey("opportunities.id"), nullable=False, unique=True)
+    opportunity_id = Column(Integer, ForeignKey("opportunities.id"), nullable=False)
     
     film_decision = Column(Boolean, nullable=False) # YES / NO from the AI
     topic = Column(String, nullable=False)

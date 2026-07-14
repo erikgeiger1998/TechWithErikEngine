@@ -14,8 +14,7 @@ class GoogleAutocompleteConnector(BaseConnector):
     # Google Autocomplete API for Chrome/Firefox, returning JSON
     BASE_URL = "http://suggestqueries.google.com/complete/search?client=chrome&hl=ro&gl=ro&q="
 
-    def __init__(self, signal_bus):
-        self.bus = signal_bus
+    def __init__(self):
         self.client = httpx.AsyncClient(timeout=self.retry_policy()["timeout_seconds"])
 
     async def metadata(self) -> Dict[str, Any]:
@@ -64,8 +63,7 @@ class GoogleAutocompleteConnector(BaseConnector):
             "feed_url": target
         }
 
-    async def archive(self, raw_data: Dict[str, Any]) -> int:
-        return await self.bus.archive_raw(raw_data)
+
 
     async def normalize(self, raw_data: Dict[str, Any]) -> List[Dict[str, Any]]:
         # Example JSON response: ["iphone", ["iphone 15", "iphone 13", "iphone se incinge"], ...]
@@ -100,9 +98,6 @@ class GoogleAutocompleteConnector(BaseConnector):
             })
         return signals
 
-    async def publish(self, signal: Dict[str, Any], raw_doc_id: int) -> None:
-        await self.bus.publish_signal(signal, raw_doc_id=raw_doc_id)
-
     async def health(self) -> Dict[str, Any]:
         try:
             res = await self.client.get(self.BASE_URL + "test")
@@ -114,15 +109,3 @@ class GoogleAutocompleteConnector(BaseConnector):
             return {"status": "Unhealthy", "error": str(e)}
         return {"status": "Warning", "error": "Unknown"}
 
-    async def execute(self) -> None:
-        targets = await self.discover()
-        for target in targets:
-            try:
-                raw_data = await self.fetch(target)
-                raw_doc_id = await self.archive(raw_data)
-                
-                signals = await self.normalize(raw_data)
-                for signal in signals:
-                    await self.publish(signal, raw_doc_id)
-            except Exception as e:
-                logger.error(f"[AUTOCOMPLETE] Failed processing {target}: {str(e)}")
