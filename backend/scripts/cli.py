@@ -227,12 +227,15 @@ def seed():
     async def _seed():
         async with AsyncSessionLocal() as db:
             problems_to_seed = [
-                {"name": "iPhone 15", "aliases": ["iphone", "apple", "ios"]},
-                {"name": "MacBook Pro", "aliases": ["macbook", "macos", "m3"]},
-                {"name": "Samsung Galaxy", "aliases": ["samsung", "galaxy", "android"]},
-                {"name": "Windows 11", "aliases": ["windows", "microsoft", "pc"]},
-                {"name": "DNSC Cybersecurity", "aliases": ["dnsc", "scam", "phishing", "frauda"]},
-                {"name": "Tech Gadgets", "aliases": ["telefon", "laptop", "emag", "altex"]}
+                {"name": "iPhone Battery Drain", "aliases": ["iphone battery", "battery life", "drain", "ios 18 battery"]},
+                {"name": "iPhone Overheating", "aliases": ["iphone 15 pro hot", "overheating", "temperature", "supraincalzire"]},
+                {"name": "Samsung Screen Issues", "aliases": ["samsung screen", "green line", "oled burn", "ecran verde"]},
+                {"name": "Android OneUI Stutter", "aliases": ["oneui lag", "stutter", "samsung lag", "incet"]},
+                {"name": "iOS Update Bugs", "aliases": ["ios bug", "update problem", "wifi drop", "bluetooth disconnect"]},
+                {"name": "Hidden iOS Tricks", "aliases": ["ios trick", "iphone hidden", "secret feature", "tips"]},
+                {"name": "Hidden Samsung Tricks", "aliases": ["samsung trick", "galaxy hidden", "good lock", "tips"]},
+                {"name": "Cybersecurity Scams (DNSC)", "aliases": ["dnsc", "phishing", "scam", "frauda", "smishing"]},
+                {"name": "Tech Deals & Advice", "aliases": ["emag deal", "altex reduceri", "best phone", "ce telefon sa cumpar"]}
             ]
             
             for p_data in problems_to_seed:

@@ -15,6 +15,9 @@ from app.connectors.google_autocomplete import GoogleAutocompleteConnector
 from app.connectors.channel import ChannelConnector
 from app.services.learning import HistoricalLearningEngine
 from app.connectors.google_trends import GoogleTrendsRomaniaConnector
+from app.connectors.reddit import RedditConnector
+from app.connectors.samsung import SamsungConnector
+from app.connectors.tiktok import TikTokConnector
 from app.models.connector_health import ConnectorHealth, ConnectorStatus
 
 logger = logging.getLogger(__name__)
@@ -30,7 +33,10 @@ class IngestionService:
             "apple_support": AppleSupportConnector(),
             "dnsc": DNSCConnector(),
             "autocomplete": GoogleAutocompleteConnector(),
-            "trends": GoogleTrendsRomaniaConnector()
+            "trends": GoogleTrendsRomaniaConnector(),
+            "reddit": RedditConnector(),
+            "samsung": SamsungConnector(),
+            "tiktok": TikTokConnector()
         }
 
     async def _update_health(self, connector_name: str, status: ConnectorStatus, latency: float, items: int, duplicates: int, error_msg: str = None, http_status: str = None):
