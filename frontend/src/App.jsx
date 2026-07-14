@@ -82,28 +82,30 @@ function App() {
           </div>
         )}
 
+        {metrics && (
         <div className="metrics-grid">
           <div className="glass-panel metric-card">
             <h3>Raw Signals</h3>
-            <div className="metric-value">{metrics?.database.signals.toLocaleString()}</div>
+            <div className="metric-value">{metrics.database?.signals?.toLocaleString()}</div>
             <div className="metric-sub">Aggregated intelligence points</div>
           </div>
           
           <div className="glass-panel metric-card">
             <h3>Canonical Problems</h3>
-            <div className="metric-value">{metrics?.database.problems.toLocaleString()}</div>
+            <div className="metric-value">{metrics.database?.problems?.toLocaleString()}</div>
             <div className="metric-sub">Clustered narrative entities</div>
           </div>
           
           <div className="glass-panel metric-card">
             <h3>System Health</h3>
             <div className="metric-value" style={{display: 'flex', alignItems: 'center'}}>
-              <span className="status-dot healthy"></span> {metrics?.connectors_summary.healthy}
-              <span className="status-dot warning" style={{marginLeft: '16px'}}></span> {metrics?.connectors_summary.warnings}
+              <span className="status-dot healthy"></span> {metrics.connectors_summary?.healthy}
+              <span className="status-dot warning" style={{marginLeft: '16px'}}></span> {metrics.connectors_summary?.warnings}
             </div>
-            <div className="metric-sub">Last fetch: {metrics?.connectors_summary.last_fetch}</div>
+            <div className="metric-sub">Last fetch: {metrics.connectors_summary?.last_fetch}</div>
           </div>
         </div>
+        )}
 
       </main>
     </div>

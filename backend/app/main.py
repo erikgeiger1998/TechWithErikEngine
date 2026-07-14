@@ -11,11 +11,24 @@ from app.models.signal import Signal
 from app.models.problem import Problem
 from app.models.recommendation import Recommendation
 from app.models.connector_health import ConnectorHealth
+from app.services.scheduler import SchedulerService
+from contextlib import asynccontextmanager
+
+scheduler_service = SchedulerService()
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # Startup
+    scheduler_service.start()
+    yield
+    # Shutdown
+    scheduler_service.shutdown()
 
 app = FastAPI(
     title=settings.PROJECT_NAME,
     version=settings.VERSION,
-    openapi_url=f"{settings.API_V1_STR}/openapi.json"
+    openapi_url=f"{settings.API_V1_STR}/openapi.json",
+    lifespan=lifespan
 )
 
 app.add_middleware(

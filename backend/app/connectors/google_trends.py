@@ -1,101 +1,40 @@
-import httpx
-import logging
-from typing import Dict, Any, List
-from bs4 import BeautifulSoup
-from app.core.connector import BaseConnector
+from pytrends.request import TrendReq
+from app.models.signal import Signal
 
-logger = logging.getLogger(__name__)
-
-class GoogleTrendsRomaniaConnector(BaseConnector):
+class GoogleTrendsRomaniaConnector:
     """
-    Tier 1 Trend Source: Google Trends (Romania)
-    High Priority - Maps human demand spikes instantly.
+    Fetches real-time trending search queries for Romania using Google Trends.
     """
-    # Daily trending searches RSS feed for Romania
-    RSS_URL = "https://trends.google.com/trends/trendingsearches/daily/rss?geo=RO"
-
     def __init__(self):
-        self.client = httpx.AsyncClient(timeout=self.retry_policy()["timeout_seconds"])
-
-    async def metadata(self) -> Dict[str, Any]:
-        return {
-            "id": "google_trends_ro",
-            "name": "Google Trends Romania",
-            "priority": 95,
-            "official": False,
-            "reliability": 0, # Reliability is N/A for Trends ("Is it true?" doesn't apply to a search query)
-            "importance": 95, # Very high importance for demand detection
-            "country": "RO",
-            "category": "Demand",
-            "schedule": "60m",
-            "etag_support": False,
-            "rate_limit": "Strict - Be very polite",
-            "expected_latency_ms": 500
-        }
-
-    def retry_policy(self) -> Dict[str, Any]:
-        return {
-            "max_retries": 3,
-            "backoff_factor": 2.5,
-            "circuit_breaker_enabled": True,
-            "timeout_seconds": 30
-        }
-
-    async def discover(self) -> List[str]:
-        return [self.RSS_URL]
-
-    async def fetch(self, target: str) -> Dict[str, Any]:
-        logger.info(f"[TRENDS] Fetching {target}")
-        response = await self.client.get(target)
-        response.raise_for_status()
+        # hl='ro' (Romanian language), tz=-120 (Eastern European Time UTC+2)
+        self.pytrends = TrendReq(hl='ro', tz=-120, timeout=(10,25))
+        
+    async def discover(self) -> list[str]:
+        # There's no specific URL to discover, just the API trigger
+        return ["api_call_trends"]
+        
+    async def fetch(self, url: str) -> dict:
+        # Fetch trending searches for Romania
+        df = self.pytrends.trending_searches(pn='romania')
+        trending_topics = df[0].tolist() # df[0] contains the query strings
         
         return {
-            "source_name": "Google Trends RO",
-            "url": target,
-            "payload": response.text,
-            "mime_type": "application/rss+xml",
-            "headers": dict(response.headers),
-            "etag": response.headers.get("ETag"),
-            "last_modified": response.headers.get("Last-Modified"),
-            "response_time_ms": response.elapsed.total_seconds() * 1000,
-            "response_size_bytes": len(response.content),
-            "connector_version": "1.0",
-            "feed_url": target
+            "status_code": 200,
+            "trends": trending_topics
         }
-
-
-
-    async def normalize(self, raw_data: Dict[str, Any]) -> List[Dict[str, Any]]:
-        soup = BeautifulSoup(raw_data["payload"], "xml")
-        items = soup.find_all("item")
         
+    async def normalize(self, raw_data: dict) -> list[dict]:
         signals = []
-        for item in items:
-            # Google Trends RSS typically includes <ht:approx_traffic> and <ht:news_item> elements
-            approx_traffic = item.find("ht:approx_traffic")
-            traffic_text = approx_traffic.text if approx_traffic else "0"
+        for index, query in enumerate(raw_data.get("trends", [])):
+            # The higher it is on the list (lower index), the higher the importance
+            importance = max(100 - (index * 5), 10) # 100 for #1, 95 for #2, etc.
             
             signals.append({
-                "source_name": "Google Trends RO",
-                "title": item.title.text if item.title else "",
-                "url": item.link.text if item.link else "",
-                "summary": f"Approximate Traffic: {traffic_text}",
+                "source_name": "Google Trends (Romania)",
                 "category": "Demand",
-                "reliability": 0,
-                "importance": 95,
-                "freshness": 10,
-                "language": "ro"
+                "raw_content": query,
+                "reliability": 9.0, # Highly reliable Google data
+                "importance": float(importance)
             })
+            
         return signals
-
-    async def health(self) -> Dict[str, Any]:
-        try:
-            res = await self.client.get(self.RSS_URL)
-            if res.status_code == 200:
-                return {"status": "Healthy", "latency_ms": res.elapsed.total_seconds() * 1000, "errors": 0}
-            elif res.status_code == 429:
-                return {"status": "Warning", "error": "Rate limit nearly exhausted"}
-        except Exception as e:
-            return {"status": "Unhealthy", "error": str(e)}
-        return {"status": "Warning", "error": "Unknown"}
-

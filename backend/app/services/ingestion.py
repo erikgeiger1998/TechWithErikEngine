@@ -29,8 +29,8 @@ class IngestionService:
             "apple": AppleNewsroomConnector(),
             "apple_support": AppleSupportConnector(),
             "dnsc": DNSCConnector(),
-            "autocomplete": GoogleAutocompleteConnector()
-            # "trends": GoogleTrendsRomaniaConnector() # Temporarily disabled
+            "autocomplete": GoogleAutocompleteConnector(),
+            "trends": GoogleTrendsRomaniaConnector()
         }
 
     async def _update_health(self, connector_name: str, status: ConnectorStatus, latency: float, items: int, duplicates: int, error_msg: str = None, http_status: str = None):
