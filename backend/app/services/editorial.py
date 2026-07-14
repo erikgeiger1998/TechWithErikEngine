@@ -45,7 +45,7 @@ class EditorialEngine:
         
         impact = problem.severity if problem.severity else 5.0
         production_ease = problem.production_ease if problem.production_ease else 7.0
-        seasonality = problem.seasonality if problem.seasonality else 1.0
+        seasonality = problem.seasonality_multiplier if problem.seasonality_multiplier else 1.0
         
         demand_score = 0.0
         trust_score = 0.0

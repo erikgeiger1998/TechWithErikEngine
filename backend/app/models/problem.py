@@ -28,7 +28,8 @@ class Problem(Base):
     
     # Context & Scores
     # Context & Scores
-    seasonality = Column(Float, default=1.0) # Multiplier for time of year relevance
+    seasonality = Column(String, nullable=True) # e.g. "Summer"
+    seasonality_multiplier = Column(Float, default=1.0) # Multiplier for time of year relevance
     severity = Column(Float, default=0.0) # e.g. 8.7
     visual_proof = Column(Boolean, default=False)
     evergreen_score = Column(Float, default=0.0) # 0-10 scale
