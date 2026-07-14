@@ -6,6 +6,7 @@ function App() {
   const [recommendation, setRecommendation] = useState(null)
   const [problems, setProblems] = useState([])
   const [activeTab, setActiveTab] = useState('morning-brief')
+  const [loading, setLoading] = useState(true)
 
   useEffect(() => {
     const fetchData = async () => {
