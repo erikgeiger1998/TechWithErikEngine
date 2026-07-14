@@ -98,8 +98,7 @@ class EditorialEngine:
             if not opp:
                 opp = Opportunity(
                     problem_id=problem.id,
-                    title=f"Fix: {problem.name}",
-                    description="Automatically generated opportunity."
+                    why=f"Automatically generated based on high signal velocity for {problem.name}."
                 )
                 self.db.add(opp)
                 await self.db.commit()
