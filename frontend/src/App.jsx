@@ -85,6 +85,12 @@ function App() {
             <div className="metric-sub" style={{marginBottom: '24px'}}>
               Confidence: <strong>{(recommendation.confidence || 0).toFixed(1)}%</strong> &nbsp;&bull;&nbsp; Trust Risk: <strong>{recommendation.trust_risk}</strong>
             </div>
+
+            {recommendation.reasoning && (
+              <div className="reasoning-text" style={{whiteSpace: "pre-wrap", color: "#e4e4e7", marginBottom: "24px", lineHeight: "1.6", background: "rgba(255,255,255,0.03)", padding: "16px", borderRadius: "8px", borderLeft: "4px solid #10b981"}}>
+                {recommendation.reasoning}
+              </div>
+            )}
             
             <h3 style={{fontSize: '0.875rem', color: '#8b8b9d', marginBottom: '12px'}}>Primary Evidence</h3>
             <div className="evidence-list">
