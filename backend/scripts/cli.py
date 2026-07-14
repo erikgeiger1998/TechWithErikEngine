@@ -219,5 +219,34 @@ def recommendations():
 def sources():
     console.print("Listing sources... (Not fully implemented yet)")
 
+@app.command()
+def seed():
+    """
+    Seeds the database with canonical Tech problems for Romania.
+    """
+    async def _seed():
+        async with AsyncSessionLocal() as db:
+            problems_to_seed = [
+                {"name": "iPhone 15", "aliases": ["iphone", "apple", "ios"]},
+                {"name": "MacBook Pro", "aliases": ["macbook", "macos", "m3"]},
+                {"name": "Samsung Galaxy", "aliases": ["samsung", "galaxy", "android"]},
+                {"name": "Windows 11", "aliases": ["windows", "microsoft", "pc"]},
+                {"name": "DNSC Cybersecurity", "aliases": ["dnsc", "scam", "phishing", "frauda"]},
+                {"name": "Tech Gadgets", "aliases": ["telefon", "laptop", "emag", "altex"]}
+            ]
+            
+            for p_data in problems_to_seed:
+                # Check if exists
+                result = await db.execute(select(Problem).where(Problem.name == p_data["name"]))
+                existing = result.scalars().first()
+                if not existing:
+                    new_prob = Problem(name=p_data["name"], aliases=p_data["aliases"])
+                    db.add(new_prob)
+                    
+            await db.commit()
+            
+    asyncio.run(_seed())
+    print("[+] Database successfully seeded with canonical problems!")
+
 if __name__ == "__main__":
     app()

@@ -128,3 +128,21 @@ async def get_todays_recommendation(db: AsyncSession = Depends(get_db)):
         "trust_risk": trust_risk,
         "evidence": evidence_list
     }
+
+@app.get("/api/intelligence/problems")
+async def get_problems(db: AsyncSession = Depends(get_db)):
+    stmt = select(Problem).order_by(Problem.evergreen_score.desc())
+    result = await db.execute(stmt)
+    problems = result.scalars().all()
+    
+    return [
+        {
+            "id": p.id,
+            "name": p.name,
+            "aliases": p.aliases,
+            "evergreen_score": p.evergreen_score,
+            "seasonality_multiplier": p.seasonality_multiplier,
+            "production_ease": p.production_ease,
+            "base_audience_size": p.base_audience_size
+        } for p in problems
+    ]
