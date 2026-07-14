@@ -12,6 +12,8 @@ from app.connectors.apple_newsroom import AppleNewsroomConnector
 from app.connectors.apple_support import AppleSupportConnector
 from app.connectors.dnsc import DNSCConnector
 from app.connectors.google_autocomplete import GoogleAutocompleteConnector
+from app.connectors.channel import ChannelConnector
+from app.services.learning import HistoricalLearningEngine
 from app.connectors.google_trends import GoogleTrendsRomaniaConnector
 from app.models.connector_health import ConnectorHealth, ConnectorStatus
 
@@ -154,6 +156,33 @@ class IngestionService:
                 "error": error_msg
             }
             
+        # Post-ingestion: Run Automated Historical Learning
+        if source == "all" or source == "channel":
+            try:
+                start_time_ch = time.time()
+                channel_videos = await ChannelConnector.fetch()
+                await HistoricalLearningEngine.process_fetched_videos(self.db, channel_videos)
+                
+                latency_ms = (time.time() - start_time_ch) * 1000
+                await self.update_connector_status("channel", ConnectorStatus.HEALTHY, latency_ms, len(channel_videos), 0, None, "200")
+                
+                summary["details"]["channel"] = {
+                    "status": "HEALTHY",
+                    "items": len(channel_videos),
+                    "error": None
+                }
+                summary["processed"] += len(channel_videos)
+                summary["healthy"] += 1
+                
+            except Exception as e:
+                logger.error(f"Failed to fetch historical channel data: {e}")
+                summary["details"]["channel"] = {
+                    "status": "WARNING",
+                    "items": 0,
+                    "error": str(e)
+                }
+                summary["warnings"] += 1
+
         summary["duration_s"] = time.time() - start_time
         return summary
         

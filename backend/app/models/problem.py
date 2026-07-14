@@ -49,3 +49,4 @@ class Problem(Base):
 
     signals = relationship("Signal", back_populates="problem")
     opportunity = relationship("Opportunity", back_populates="problem", uselist=False)
+    videos = relationship("PublishedVideo", back_populates="problem")
