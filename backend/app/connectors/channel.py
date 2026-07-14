@@ -7,8 +7,8 @@ class ChannelConnector:
     Automatically fetches recent published videos from a public YouTube RSS feed.
     Zero OAuth required. Captures basic performance metrics (views).
     """
-    # Dummy channel ID for MVP. In reality, Erik will provide his channel ID here.
-    CHANNEL_ID = "UC_x5XG1OV2P6uZZ5FSM9Ttw" # Google Developers for placeholder
+    # Actual channel ID for Erik
+    CHANNEL_ID = "UCyBqR9RK8V_O4RQ3P_JUNlw"
     FEED_URL = f"https://www.youtube.com/feeds/videos.xml?channel_id={CHANNEL_ID}"
 
     @classmethod
