@@ -109,13 +109,24 @@ class EditorialEngine:
             
             trust_risk = "LOW" if trust >= 7.5 else "HIGH" if trust < 4.0 else "MEDIUM"
             
+            signal_summary = []
+            # Take the top 3 most important signals for reasoning
+            top_signals = sorted(problem.signals, key=lambda s: s.importance, reverse=True)[:3]
+            for sig in top_signals:
+                signal_summary.append(f"- {sig.source_name}: {sig.title}")
+                
+            if signal_summary:
+                reasoning_text = f"ROI {roi} driven by {len(problem.signals)} signals. Key evidence:\n" + "\n".join(signal_summary)
+            else:
+                reasoning_text = f"ROI {roi}, calculated based on historical baseline."
+                
             rec = Recommendation(
                 opportunity_id=opp.id,
                 film_decision=roi > 500, # arbitrary threshold
                 topic=f"Fix: {problem.name}",
                 confidence_percentage=confidence,
                 trust_score=trust,
-                reasoning=f"ROI is {roi}, calculated deterministically.",
+                reasoning=reasoning_text,
                 erik_decision=HumanDecision.PENDING
             )
             
