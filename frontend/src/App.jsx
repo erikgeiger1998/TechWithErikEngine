@@ -134,7 +134,7 @@ function App() {
                 </tr>
               </thead>
               <tbody>
-                {problems.map(p => (
+                {(Array.isArray(problems) ? problems : []).map(p => (
                   <tr key={p.id} style={{borderBottom: '1px solid #27272a'}}>
                     <td style={{padding: '12px 8px', fontWeight: 'bold'}}>{p.name}</td>
                     <td style={{padding: '12px 8px', color: '#a1a1aa'}}>{p.aliases?.join(', ')}</td>
@@ -142,7 +142,7 @@ function App() {
                     <td style={{padding: '12px 8px'}}>{p.seasonality_multiplier}x</td>
                   </tr>
                 ))}
-                {problems.length === 0 && (
+                {(!Array.isArray(problems) || problems.length === 0) && (
                   <tr>
                     <td colSpan="4" style={{padding: '24px', textAlign: 'center', color: '#71717a'}}>No problems found. Run `intel seed`</td>
                   </tr>

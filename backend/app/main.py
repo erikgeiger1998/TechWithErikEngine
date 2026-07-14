@@ -140,9 +140,8 @@ async def get_problems(db: AsyncSession = Depends(get_db)):
             "id": p.id,
             "name": p.name,
             "aliases": p.aliases,
-            "evergreen_score": p.evergreen_score,
-            "seasonality_multiplier": p.seasonality_multiplier,
-            "production_ease": p.production_ease,
-            "base_audience_size": p.base_audience_size
+            "evergreen_score": p.evergreen_score or 0,
+            "seasonality_multiplier": p.seasonality_multiplier or 1.0,
+            "production_ease": p.production_ease or 7.0
         } for p in problems
     ]
