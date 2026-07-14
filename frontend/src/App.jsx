@@ -7,6 +7,7 @@ function App() {
   const [problems, setProblems] = useState([])
   const [activeTab, setActiveTab] = useState('morning-brief')
   const [loading, setLoading] = useState(true)
+  const [selectedProblem, setSelectedProblem] = useState(null)
 
   useEffect(() => {
     const fetchData = async () => {
@@ -158,7 +159,11 @@ function App() {
               </thead>
               <tbody>
                 {(Array.isArray(problems) ? problems : []).map(p => (
-                  <tr key={p.id} style={{borderBottom: '1px solid #27272a'}}>
+                  <tr key={p.id} onClick={async () => {
+                    const res = await fetch(`/api/intelligence/problems/${p.id}`);
+                    const data = await res.json();
+                    setSelectedProblem(data);
+                  }} style={{borderBottom: '1px solid #27272a', cursor: 'pointer', transition: 'background 0.2s'}} onMouseOver={(e) => e.currentTarget.style.background = 'rgba(255,255,255,0.02)'} onMouseOut={(e) => e.currentTarget.style.background = 'transparent'}>
                     <td style={{padding: '12px 8px', fontWeight: 'bold'}}>{p.name}</td>
                     <td style={{padding: '12px 8px', color: '#a1a1aa'}}>{p.aliases?.join(', ')}</td>
                     <td style={{padding: '12px 8px', color: '#10b981'}}>{p.evergreen_score.toFixed(1)}</td>
@@ -206,6 +211,30 @@ function App() {
         )}
 
       </main>
+
+      {selectedProblem && (
+        <div style={{position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.8)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000}}>
+          <div className="glass-panel" style={{width: '600px', maxHeight: '80vh', overflowY: 'auto', position: 'relative'}}>
+            <button onClick={() => setSelectedProblem(null)} style={{position: 'absolute', right: '16px', top: '16px', background: 'transparent', border: 'none', color: '#a1a1aa', cursor: 'pointer', fontSize: '1.2rem'}}>&times;</button>
+            <h2 style={{marginBottom: '8px'}}>{selectedProblem.name}</h2>
+            <div style={{color: '#a1a1aa', marginBottom: '24px', fontSize: '0.875rem'}}>Evergreen Score: {selectedProblem.evergreen_score?.toFixed(1)}</div>
+            
+            <h3 style={{fontSize: '1rem', marginBottom: '12px', borderBottom: '1px solid #3f3f46', paddingBottom: '8px'}}>Attached Signals ({selectedProblem.signals?.length || 0})</h3>
+            <div style={{display: 'flex', flexDirection: 'column', gap: '8px'}}>
+              {selectedProblem.signals?.length === 0 && <div style={{color: '#71717a'}}>No signals attached to this entity yet.</div>}
+              {selectedProblem.signals?.map((sig, i) => (
+                <div key={i} style={{background: 'rgba(255,255,255,0.03)', padding: '12px', borderRadius: '6px'}}>
+                  <div style={{fontSize: '0.9rem', marginBottom: '4px'}}>{sig.title}</div>
+                  <div style={{display: 'flex', justifyContent: 'space-between', fontSize: '0.75rem', color: '#a1a1aa'}}>
+                    <span>Source: {sig.source}</span>
+                    <span>Importance: {sig.importance}/100</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

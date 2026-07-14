@@ -152,3 +152,25 @@ async def get_problems(db: AsyncSession = Depends(get_db)):
             "production_ease": p.production_ease or 7.0
         } for p in problems
     ]
+
+@app.get("/api/intelligence/problems/{problem_id}")
+async def get_problem_details(problem_id: int, db: AsyncSession = Depends(get_db)):
+    from sqlalchemy.orm import selectinload
+    stmt = select(Problem).options(selectinload(Problem.signals)).where(Problem.id == problem_id)
+    p = (await db.execute(stmt)).scalars().first()
+    
+    if not p:
+        return {"error": "Not found"}
+        
+    return {
+        "id": p.id,
+        "name": p.name,
+        "evergreen_score": p.evergreen_score,
+        "signals": [
+            {
+                "title": s.title,
+                "source": s.source_name,
+                "importance": s.importance
+            } for s in p.signals
+        ]
+    }

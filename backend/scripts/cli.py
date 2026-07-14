@@ -227,8 +227,8 @@ def seed():
     async def _seed():
         async with AsyncSessionLocal() as db:
             problems_to_seed = [
-                {"name": "iPhone Battery Drain", "aliases": ["iphone battery", "battery life", "drain", "ios 18 battery"]},
-                {"name": "iPhone Overheating", "aliases": ["iphone 15 pro hot", "overheating", "temperature", "supraincalzire"]},
+                {"name": "iPhone Battery Drain", "aliases": ["iphone battery", "iphone drain", "ios battery", "ios 18 battery"]},
+                {"name": "iPhone Overheating", "aliases": ["iphone 15 pro hot", "iphone overheating", "ios temperature", "supraincalzire iphone"]},
                 {"name": "Samsung Screen Issues", "aliases": ["samsung screen", "green line", "oled burn", "ecran verde"]},
                 {"name": "Android OneUI Stutter", "aliases": ["oneui lag", "stutter", "samsung lag", "incet"]},
                 {"name": "iOS Update Bugs", "aliases": ["ios bug", "update problem", "wifi drop", "bluetooth disconnect"]},
