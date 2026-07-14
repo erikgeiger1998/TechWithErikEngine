@@ -34,31 +34,49 @@ class ProblemClusteringEngine:
         return mapping
 
     @classmethod
-    async def determine_problem(cls, db_session: AsyncSession, text: str) -> Optional[str]:
+    async def determine_problem(cls, db_session: AsyncSession, text: str) -> Optional[int]:
         """
         Attempts to map text to a canonical Problem node using DB aliases.
+        Returns the Problem ID if a match is found.
         """
         text_lower = text.lower()
-        mapping = await cls.get_problems_map(db_session)
         
-        for canonical_name, aliases in mapping.items():
+        from app.models.problem import Problem
+        from sqlalchemy.future import select
+        
+        stmt = select(Problem)
+        result = await db_session.execute(stmt)
+        problems = result.scalars().all()
+        
+        for p in problems:
+            aliases = [p.name.lower()]
+            if p.aliases:
+                aliases.extend([a.lower() for a in p.aliases])
+                
             for alias in aliases:
+                # Basic token matching could be improved with regex/NLP later
                 if alias in text_lower:
-                    return canonical_name
+                    return p.id
                     
         return None
 
     @classmethod
-    async def attach_signal(cls, db_session: AsyncSession, signal: dict) -> None:
+    async def attach_signal(cls, db_session: AsyncSession, signal) -> None:
         """
-        Looks up or creates a Problem and associates the Signal.
+        Associates the Signal ORM object with a canonical Problem.
         """
-        # (Mock implementation for now, should accept the actual Signal ORM object)
-        text_to_analyze = signal.get("title", "") + " " + signal.get("summary", "")
-        problem_name = await cls.determine_problem(db_session, text_to_analyze)
+        from app.models.signal import Signal
+        if not isinstance(signal, Signal):
+            return
+            
+        text_to_analyze = f"{signal.title} {signal.summary or ''} {signal.url}"
+        problem_id = await cls.determine_problem(db_session, text_to_analyze)
         
-        if problem_name:
-            logger.info(f"[CLUSTERING] Mapped signal to {problem_name}")
+        if problem_id:
+            signal.problem_id = problem_id
+            db_session.add(signal)
+            await db_session.commit()
+            logger.info(f"[CLUSTERING] Mapped signal '{signal.title[:20]}...' to Problem {problem_id}")
         else:
-            logger.debug(f"[CLUSTERING] Unmapped signal: {text_to_analyze[:30]}...")
+            logger.debug(f"[CLUSTERING] Unmapped signal: {signal.title[:30]}...")
 

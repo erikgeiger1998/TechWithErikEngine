@@ -34,7 +34,7 @@ class EditorialEngine:
             return 1.0
         return 0.5 ** ((age_days - 7) / 7.0)
 
-    async def calculate_roi(self, problem: Problem) -> float:
+    async def calculate_roi(self, problem: Problem) -> tuple[float, float]:
         """
         Calculates ROI deterministically:
         ROI = Impact * Trust * Demand * Production Ease
@@ -44,7 +44,8 @@ class EditorialEngine:
         # Production Ease: 1-10 scale
         
         impact = problem.severity if problem.severity else 5.0
-        production_ease = 7.0 # Default MVP
+        production_ease = problem.production_ease if problem.production_ease else 7.0
+        seasonality = problem.seasonality if problem.seasonality else 1.0
         
         demand_score = 0.0
         trust_score = 0.0
@@ -75,8 +76,9 @@ class EditorialEngine:
         # Normalize trust to 1-10 multiplier
         trust_multiplier = trust / 10.0
         
-        roi = impact * trust_multiplier * demand_multiplier * production_ease
-        return round(roi, 2)
+        # Apply seasonality modifier
+        roi = impact * trust_multiplier * demand_multiplier * production_ease * seasonality
+        return round(roi, 2), round(trust, 2)
 
     async def generate_morning_recommendations(self):
         """
@@ -89,7 +91,7 @@ class EditorialEngine:
         recommendations = []
         
         for problem in problems:
-            roi = await self.calculate_roi(problem)
+            roi, trust = await self.calculate_roi(problem)
             
             # Ensure Opportunity exists
             opp = problem.opportunity
@@ -106,12 +108,14 @@ class EditorialEngine:
             # Create a recommendation snapshot
             confidence = min(roi / 10.0, 100.0) # Dummy scaling for MVP
             
+            trust_risk = "LOW" if trust >= 7.5 else "HIGH" if trust < 4.0 else "MEDIUM"
+            
             rec = Recommendation(
                 opportunity_id=opp.id,
                 film_decision=roi > 500, # arbitrary threshold
                 topic=opp.title,
                 confidence_percentage=confidence,
-                trust_score=8.5, # Static for MVP structure
+                trust_score=trust,
                 reasoning=f"ROI is {roi}, calculated deterministically.",
                 erik_decision=HumanDecision.PENDING
             )

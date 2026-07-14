@@ -74,18 +74,38 @@ async def get_dashboard_metrics(db: AsyncSession = Depends(get_db)):
 
 @app.get("/api/recommendations/today")
 async def get_todays_recommendation(db: AsyncSession = Depends(get_db)):
-    stmt = select(Recommendation).order_by(Recommendation.confidence_percentage.desc()).limit(1)
+    from sqlalchemy.orm import selectinload
+    from app.models.opportunity import Opportunity
+    
+    stmt = (
+        select(Recommendation)
+        .options(
+            selectinload(Recommendation.opportunity)
+            .selectinload(Opportunity.problem)
+            .selectinload(Problem.signals)
+        )
+        .order_by(Recommendation.confidence_percentage.desc())
+        .limit(1)
+    )
     top_rec = (await db.execute(stmt)).scalars().first()
     
     if not top_rec:
         return {"topic": "No recommendations yet", "roi": 0.0, "film_decision": False, "trust_risk": "UNKNOWN", "evidence": []}
         
     roi = round(top_rec.confidence_percentage / 10.0, 1)
+    trust_risk = "LOW" if top_rec.trust_score >= 7.5 else "HIGH" if top_rec.trust_score < 4.0 else "MEDIUM"
     
-    # Normally we'd fetch evidence (Signals) through Problem, but for MVP we mock the evidence list 
-    # based on the recommendation since it's just read-only UI scaffold
-    
-    trust_risk = "LOW" if top_rec.trust_score > 7.0 else "HIGH"
+    evidence_list = []
+    if top_rec.opportunity and top_rec.opportunity.problem:
+        # Take the top 3 signals as evidence
+        for sig in top_rec.opportunity.problem.signals[:3]:
+            evidence_list.append({
+                "source": sig.source_name,
+                "type": sig.category or "Evidence"
+            })
+            
+    if not evidence_list:
+        evidence_list = [{"source": "Historical", "type": "Generated Opportunity"}]
     
     return {
         "topic": top_rec.topic,
@@ -93,8 +113,5 @@ async def get_todays_recommendation(db: AsyncSession = Depends(get_db)):
         "film_decision": top_rec.film_decision,
         "confidence": top_rec.confidence_percentage,
         "trust_risk": trust_risk,
-        "evidence": [
-            {"source": "Apple Support", "type": "Technical article"},
-            {"source": "Autocomplete", "type": "Search velocity"}
-        ]
+        "evidence": evidence_list
     }

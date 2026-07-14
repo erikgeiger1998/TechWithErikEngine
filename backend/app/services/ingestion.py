@@ -7,6 +7,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 
 from app.services.signal_bus import SignalBus
+from app.services.clustering import ProblemClusteringEngine
 from app.connectors.apple_newsroom import AppleNewsroomConnector
 from app.connectors.apple_support import AppleSupportConnector
 from app.connectors.dnsc import DNSCConnector
@@ -109,6 +110,10 @@ class IngestionService:
                         for signal_data in signals:
                             items_processed += 1
                             signal, is_duplicate = await self.bus.publish(raw_data, signal_data)
+                            
+                            # Attach signal to canonical problem
+                            await ProblemClusteringEngine.attach_signal(self.db, signal)
+                            
                             if is_duplicate:
                                 duplicates += 1
                                 
