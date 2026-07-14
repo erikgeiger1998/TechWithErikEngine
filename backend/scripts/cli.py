@@ -12,6 +12,10 @@ from app.database.connection import AsyncSessionLocal
 from app.services.ingestion import IngestionService
 from app.services.editorial import EditorialEngine
 from app.models.connector_health import ConnectorHealth
+from app.models.signal import Signal
+from app.models.problem import Problem
+from app.models.recommendation import Recommendation
+from sqlalchemy import func
 
 app = typer.Typer(help="Tech With Erik - Editorial Intelligence OS CLI")
 console = Console()
@@ -153,6 +157,51 @@ def morning():
                 console.print("\n[dim]--------------------------------[/dim]\n")
                 
     run_async(_morning())
+
+@app.command("dashboard")
+def dashboard():
+    """
+    Shows a Bloomberg-terminal style dashboard for the Editorial OS.
+    """
+    async def _dashboard():
+        async with AsyncSessionLocal() as db:
+            # Counts
+            signals_count = (await db.execute(select(func.count(Signal.id)))).scalar() or 0
+            problems_count = (await db.execute(select(func.count(Problem.id)))).scalar() or 0
+            rec_count = (await db.execute(select(func.count(Recommendation.id)))).scalar() or 0
+            
+            # Connector Health
+            health_records = (await db.execute(select(ConnectorHealth))).scalars().all()
+            healthy_count = sum(1 for r in health_records if r.status and r.status.value == "HEALTHY")
+            warning_count = sum(1 for r in health_records if r.status and r.status.value == "WARNING")
+            
+            last_fetch = max((r.last_run for r in health_records if r.last_run), default=None)
+            last_fetch_str = _format_time(last_fetch) if last_fetch else "Never"
+            
+            # Top Problem & ROI (based on Recommendations)
+            stmt = select(Recommendation).order_by(Recommendation.confidence_percentage.desc()).limit(1)
+            top_rec = (await db.execute(stmt)).scalars().first()
+            
+            top_problem_str = top_rec.topic if top_rec else "None"
+            top_roi_str = str(round(top_rec.confidence_percentage / 10.0, 1)) if top_rec else "0.0"
+            
+            panel_content = f"""[bold cyan]Database[/bold cyan]
+Signals:          {signals_count:,}
+Problems:         {problems_count:,}
+Recommendations:  {rec_count:,}
+
+[bold cyan]Connectors[/bold cyan]
+Healthy:          {healthy_count}
+Warnings:         {warning_count}
+Last Fetch:       {last_fetch_str}
+
+[bold cyan]Intelligence[/bold cyan]
+Top Problem:      {top_problem_str}
+Top ROI:          {top_roi_str}"""
+
+            console.print(Panel(panel_content, title="[bold white]Editorial OS Dashboard[/bold white]", expand=False))
+            
+    run_async(_dashboard())
 
 @app.command("explain")
 def explain(topic: str):
