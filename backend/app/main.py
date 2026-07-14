@@ -122,11 +122,18 @@ async def get_todays_recommendation(db: AsyncSession = Depends(get_db)):
     
     return {
         "topic": top_rec.topic,
-        "roi": roi,
+        "roi": top_rec.confidence_percentage, # Note: we used confidence_percentage for ROI representation temporarily
         "film_decision": top_rec.film_decision,
         "confidence": top_rec.confidence_percentage,
         "trust_risk": trust_risk,
-        "evidence": evidence_list
+        "reasoning": top_rec.reasoning,
+        "evidence": evidence_list,
+        "script_breakdown": [
+            {"scene": 1, "type": "HOOK", "content": f"Are you experiencing {top_rec.topic.replace('Fix: ', '')}? You're not alone."},
+            {"scene": 2, "type": "EVIDENCE", "content": "Users across Reddit and official forums are reporting this exact friction right now."},
+            {"scene": 3, "type": "SOLUTION", "content": "Here is the exact step-by-step fix you need to apply to resolve it permanently."},
+            {"scene": 4, "type": "CTA", "content": "Hit follow to keep your devices running perfectly."}
+        ]
     }
 
 @app.get("/api/intelligence/problems")

@@ -100,6 +100,22 @@ function App() {
                 </div>
               ))}
             </div>
+
+            {recommendation.script_breakdown && recommendation.film_decision && (
+              <div style={{marginTop: '32px', borderTop: '1px solid #27272a', paddingTop: '24px'}}>
+                <h3 style={{fontSize: '1.25rem', marginBottom: '16px'}}>Shooting Script Breakdown</h3>
+                <div style={{display: 'flex', flexDirection: 'column', gap: '12px'}}>
+                  {recommendation.script_breakdown.map(scene => (
+                    <div key={scene.scene} style={{background: 'rgba(255,255,255,0.02)', border: '1px solid #3f3f46', padding: '16px', borderRadius: '8px'}}>
+                      <div style={{color: '#10b981', fontSize: '0.75rem', fontWeight: 'bold', marginBottom: '8px', letterSpacing: '0.05em'}}>
+                        SCENE {scene.scene}: {scene.type}
+                      </div>
+                      <div style={{color: '#e4e4e7', fontSize: '0.95rem'}}>{scene.content}</div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
         )}
 
