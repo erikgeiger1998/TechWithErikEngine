@@ -112,7 +112,7 @@ class EditorialEngine:
             rec = Recommendation(
                 opportunity_id=opp.id,
                 film_decision=roi > 500, # arbitrary threshold
-                topic=opp.title,
+                topic=f"Fix: {problem.name}",
                 confidence_percentage=confidence,
                 trust_score=trust,
                 reasoning=f"ROI is {roi}, calculated deterministically.",
